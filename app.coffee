@@ -67,14 +67,18 @@ get_file = (file, cb)->
     req.send();
 
 
-class MaskCanvas
+class CidrCanvas
 
     constructor:(@cvs, @size=0)->
         @ctx = @cvs.getContext "2d"
+        @res @size
+        @cvs.addEventListener "mousemove", @mousemove
+        @clear()
+
+    res:(@size)=>
         @h = @w = @cvs.height = @cvs.width = 1<<(8+@size)
         @b = cvs.getBoundingClientRect()
-        @cvs.addEventListener "mousemove", @mousemove
-
+        
     plot_cidrs: (cidrs, color) =>
         id = @ctx.getImageData 0, 0, @w, @h
         d = id.data
@@ -105,7 +109,7 @@ class MaskCanvas
         y = e.clientY-@b.top
         ip = xy2d @h, {x:x, y:y}
         ip = ip << (8-@size)*2 >>>0
-        cursor_ip.innerHTML = """#{ip2hex ip}\n#{ip2dec ip}"""
+        cursor_ip.innerHTML = "#{ip2dec ip}"
 
 
 hex2color = (hex)->
@@ -120,16 +124,18 @@ draw = ()->
     data = cidrs.innerHTML.split /\n/
     data = data.map (l)-> l.split(/\s*#/)[0]
     color = hex2color colors_sel.options[colors_sel.selectedIndex].value[1..]
-    mask_cvs.plot_cidrs data, color
+    cidr_cvs.plot_cidrs data, color
 
 
 cidrs_sel  = document.getElementById "cidrs_sel"
-cidrs      = document.getElementById "cidrs"
-cvs        = document.getElementById "cvs"
 colors_sel = document.getElementById "colors_sel"
+res_sel    = document.getElementById "resolution_sel"
+cvs        = document.getElementById "cvs"
 cursor_ip  = document.getElementById "ip"
 
-mask_cvs = new MaskCanvas(cvs, 1)
+cidrs      = document.getElementById "cidrs"
+
+cidr_cvs = new CidrCanvas(cvs, 0)
 
 cidrs_change = ->
     value = cidrs_sel.options[cidrs_sel.selectedIndex].value
@@ -138,10 +144,16 @@ cidrs_change = ->
 cidrs_sel.addEventListener "change", cidrs_change
 cidrs_change()
 
+res_change = ->
+    value = res_sel.options[res_sel.selectedIndex].value
+    cidr_cvs.res parseInt value
+res_sel.addEventListener "change", res_change
+
+
 draw_btn = document.getElementById "draw"
 draw_btn.addEventListener "click",draw
 clear_btn = document.getElementById "clear"
-clear_btn.addEventListener "click", -> mask_cvs.clear()
+clear_btn.addEventListener "click", -> cidr_cvs.clear()
 
 cidrs.addEventListener "keydown", (e)->
     draw() if e.code is "Enter" and e.ctrlKey
