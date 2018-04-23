@@ -1,8 +1,8 @@
 body, html {
     background: #000;
-    padding: 0;
+    padding: 8px;
     margin: 0;
     color: gray;
 }
-pre, p {border: solid 1px gray;}
+pre, p {border: solid 1px gray;padding:4px;}
 p {display: inline-block;}
