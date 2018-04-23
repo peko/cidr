@@ -129,7 +129,7 @@ cvs        = document.getElementById "cvs"
 colors_sel = document.getElementById "colors_sel"
 cursor_ip  = document.getElementById "ip"
 
-mask_cvs = new MaskCanvas(cvs, 2)
+mask_cvs = new MaskCanvas(cvs, 1)
 
 cidrs_change = ->
     value = cidrs_sel.options[cidrs_sel.selectedIndex].value
