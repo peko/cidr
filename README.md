@@ -2,7 +2,7 @@
 
 Генерирует полную карту IPv4, закрашивая указанные сегменты выбранным цветом
 
-Заполнение сегментов производиться с помощью [фрактала Гилберта](https://github.com/ailove-lab/Ailove-Hilbert)
+Заполнение сегментов производится с помощью [фрактала Гилберта](https://github.com/ailove-lab/Ailove-Hilbert)
 
 [Демо](https://ailove-lab.github.io/cidr/)
 
