@@ -4,17 +4,17 @@
 
 Заполнение сегментов производится с помощью [фрактала Гилберта](https://github.com/ailove-lab/Ailove-Hilbert)
 
-# C версия
+## C версия
 
 [hilbert](hilbert/)
 
-# Web версия
+## Web версия
 
 [Демо](https://ailove-lab.github.io/cidr/)
 
 Список подсетей можно редактировать, отрисовка по `ctrl+enter`
 
-## Пример
+### Пример
 
  - Серый - us
  - Голубой - amazon
