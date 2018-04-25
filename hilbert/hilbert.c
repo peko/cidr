@@ -12,7 +12,6 @@ typedef struct pixel_t {
    unsigned char r;
    unsigned char g;
    unsigned char b;
-   unsigned char a;
 } pixel_t;
 
 typedef struct cidr_t {
@@ -22,14 +21,16 @@ typedef struct cidr_t {
 
 typedef kvec_t(struct cidr_t) cidrs_v;
 
-char* in_file;
-char* out_file;
+char* in_file ="test.cidr";
+char* out_file="out.png";
 unsigned int power = 0;
 unsigned int size  = 256;
     
 cidr_t parse_cidr(char* line) {
 
     cidr_t cidr = {0};
+    if(!isdigit(*line)) return cidr;
+
     int i = 0;
     // parse ip
     while (*line!=0 && *line!='/') {
@@ -104,8 +105,8 @@ cidrs_v read_cidrs(char* filename) {
     while(getline(&line, &size, in) > 0) {
         cidr_t cidr = parse_cidr(line);
         fprintf(stderr, 
-            "%s\t%d.%d.%d.%d/%d", 
-            line,
+            "%.*s\n%d.%d.%d.%d/%d ", 
+            strlen(line)-1, line,
             cidr.ip[0], 
             cidr.ip[1], 
             cidr.ip[2], 
@@ -145,13 +146,20 @@ error:
 }
 
 void draw_cidr(cidr_t* cidr, pixel_t* canvas) {
-    uint32_t netstart = cidr->ip[0]<<24 | cidr->ip[1]<<16 | cidr->ip[2]<< 8 | cidr->ip[3] & cidr->mask;
-    uint32_t netend   = netstart | ~cidr->mask;
-    for(size_t i=netstart>>(8-power); i<netend>>(8-power); i++) {
-        canvas[i].r+= 127;
-        canvas[i].g+= 127;
-        canvas[i].b+= 127;
-        canvas[i].a = 255;
+    uint32_t mask = (-1)<<(32-cidr->mask);
+    uint32_t netstart = cidr->ip[0]<<24 | cidr->ip[1]<<16 | cidr->ip[2]<< 8 | cidr->ip[3] & mask;
+    uint32_t netend   = netstart | ~mask;
+    fprintf(stderr, "%x/%d >> %x\n", netstart, cidr->mask, netend);
+    netstart >>= 2*(8-power);
+    netend   >>= 2*(8-power);
+    fprintf(stderr, "%x >> %x\n", netstart, netend);
+    for(size_t i=netstart; i<=netend; i++) {
+        int x, y, p;
+        d2xy(size, i, &x, &y);
+        p = x+y*size;
+        canvas[p].r+= 127;
+        canvas[p].g+= 127;
+        canvas[p].b+= 127;
     }
 }
 
@@ -162,15 +170,21 @@ void draw_cidrs(cidrs_v cidrs, pixel_t* canvas) {
 }
 
 int main(int argc, char** argv){
-
+    if(argc==1) {
+       fprintf(stderr, 
+       "Usage: ./hilbert file.cidr [image_power [result.png]]\n"
+       "\tfile.cidr lines with ranges like '192.168.0.0/16'\n"
+       "\timage_power - 0..8, size of image, 0-256x256, 1-512x512, ...\n"
+       "\tresult.png - output image\n");
+       exit(1);
+    }
     if(argc>=2) in_file = argv[1];
     if(argc>=3 && *argv[2]>='0' && *argv[2]<='8') {
        power = *argv[2]-'0';
        size  = 1<<(power+8);
     }
     if(argc>=4) out_file = argv[3];
-    
-    pixel_t* canvas = calloc(1, sizeof(pixel_t)*size*size);
+    pixel_t* canvas = calloc(size*size, sizeof(pixel_t));
 
     cidrs_v cidrs = read_cidrs(in_file);
     draw_cidrs(cidrs, canvas);
