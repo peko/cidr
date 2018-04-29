@@ -157,9 +157,9 @@ void draw_cidr(cidr_t* cidr, pixel_t* canvas) {
         int x, y, p;
         d2xy(size, i, &x, &y);
         p = x+y*size;
-        canvas[p].r+= 127;
-        canvas[p].g+= 127;
-        canvas[p].b+= 127;
+        canvas[p].r+=(255-canvas[p].r)>>1;
+        canvas[p].g+=(255-canvas[p].g)>>1;
+        canvas[p].b+=(255-canvas[p].b)>>1;
     }
 }
 
