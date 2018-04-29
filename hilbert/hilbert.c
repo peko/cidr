@@ -5,13 +5,14 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "TinyPngOut.h"
+#include "lodepng.h"
 #include "kvec.h"
 
 typedef struct pixel_t {
    unsigned char r;
    unsigned char g;
    unsigned char b;
+   unsigned char a;
 } pixel_t;
 
 typedef struct cidr_t {
@@ -22,7 +23,8 @@ typedef struct cidr_t {
 typedef kvec_t(struct cidr_t) cidrs_v;
 
 char* in_file ="test.cidr";
-char* out_file="out.png";
+char* in_png  = 0;
+char* out_png = "out.png";
 unsigned int power = 0;
 unsigned int size  = 256;
     
@@ -125,26 +127,6 @@ cidrs_v read_cidrs(char* filename) {
     return cidrs;
 }
 
-int save_png(char* filename, pixel_t* pixels) {
-
-    FILE *fout = fopen(filename, "wb");
-    struct TinyPngOut pngout;
-    if (fout == NULL || TinyPngOut_init(&pngout, fout, size, size) != TINYPNGOUT_OK)
-    	goto error;
-    if (TinyPngOut_write(&pngout, (const uint8_t*) pixels, size * size) != TINYPNGOUT_OK)
-    	goto error;
-    if (TinyPngOut_write(&pngout, NULL, 0) != TINYPNGOUT_DONE)
-    	goto error;
-    fclose(fout);
-    return EXIT_SUCCESS;
-
-error:
-    fprintf(stderr, "Write PNG Error\n");
-    if (fout != NULL)
-    	fclose(fout);
-    return EXIT_FAILURE;
-}
-
 void draw_cidr(cidr_t* cidr, pixel_t* canvas) {
     uint32_t mask = (-1)<<(32-cidr->mask);
     uint32_t netstart = cidr->ip[0]<<24 | cidr->ip[1]<<16 | cidr->ip[2]<< 8 | cidr->ip[3] & mask;
@@ -160,6 +142,7 @@ void draw_cidr(cidr_t* cidr, pixel_t* canvas) {
         canvas[p].r+=(255-canvas[p].r)>>1;
         canvas[p].g+=(255-canvas[p].g)>>1;
         canvas[p].b+=(255-canvas[p].b)>>1;
+        canvas[p].a = 255;
     }
 }
 
@@ -172,25 +155,48 @@ void draw_cidrs(cidrs_v cidrs, pixel_t* canvas) {
 int main(int argc, char** argv){
     if(argc==1) {
        fprintf(stderr, 
-       "Usage: ./hilbert file.cidr [image_power [result.png]]\n"
+       "Usage: ./hilbert file.cidr [image_power [update.png] [result.png]]\n"
        "\tfile.cidr lines with ranges like '192.168.0.0/16'\n"
        "\timage_power - 0..8, size of image, 0-256x256, 1-512x512, ...\n"
+       "\tupdate.png - image to update\n"
        "\tresult.png - output image\n");
        exit(1);
     }
     if(argc>=2) in_file = argv[1];
-    if(argc>=3 && *argv[2]>='0' && *argv[2]<='8') {
+    if(argc>=3 && *argv[ 2 ]>='0' && *argv[2]<='8') {
        power = *argv[2]-'0';
        size  = 1<<(power+8);
     }
-    if(argc>=4) out_file = argv[3];
-    pixel_t* canvas = calloc(size*size, sizeof(pixel_t));
-
+    
+    pixel_t* canvas = NULL;
+    if(argc==4) {
+        out_png = argv[3];
+        canvas  = calloc(size*size, sizeof(pixel_t));
+        for(size_t i=0; i<size*size; i++) canvas[i] = (pixel_t){0,0,0,255};
+    } else if(argc==5) {
+        in_png  = argv[3];
+        unsigned error;
+        unsigned width, height;
+        error = lodepng_decode32_file((unsigned char**)&canvas, &width, &height, in_png);
+        if(error) {
+            fprintf(stderr, "error %u: %s\n", error, lodepng_error_text(error));
+            goto error;
+        }
+        if(width!=size || height!=size) {
+            fprintf(stderr, "error: input image size must be %dx%dpx\n", size, size);
+            goto error;
+        }
+        out_png = argv[4];
+    };
+    
     cidrs_v cidrs = read_cidrs(in_file);
     draw_cidrs(cidrs, canvas);
     kv_destroy(cidrs);
-
-    save_png(out_file, canvas);
     
+    unsigned error = lodepng_encode32_file(out_png, (unsigned char*)canvas, size, size);
+    if(error) printf("error %u: %s\n", error, lodepng_error_text(error));
+
+error:
+    free(canvas);
 }
 
