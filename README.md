@@ -4,12 +4,6 @@
 
 Заполнение сегментов производится с помощью [фрактала Гилберта](https://github.com/ailove-lab/Ailove-Hilbert)
 
-## C версия
-
-[hilbert](hilbert/) - запускается каждые 4 часа, генерирует чб карту блокировок [rkn-map](rkn-map/)
-
-![](rkn-map/rkn.1.gif)
-
 ## Web версия
 
 [Демо](https://ailove-lab.github.io/cidr/)
@@ -26,6 +20,11 @@
 ![](without_blocks.png)
 ![](blocked.png)
 
+## C версия
+
+[hilbert](hilbert/) - запускается каждые 4 часа, генерирует чб карту блокировок [rkn-map](rkn-map/)
+
+![](history/rkn.gif)
 
 ## TODO
 
