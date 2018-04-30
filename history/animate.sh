@@ -63,7 +63,7 @@ ffmpeg        \
     -r 10     \
     -i $list  \
     -y        \
-    ./rkn.mp4
+    ./rkn.gif
 
 # cleanup
 rm -rf /tmp/rkn
