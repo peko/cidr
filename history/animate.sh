@@ -44,7 +44,7 @@ do
     if [ -s $csv ]
     then
         # out + new cidrs
-        ./hilbert/build/hilbert $csv 2 $out $png
+        ../hilbert/build/hilbert $csv 2 $out $png
         # backup png -> out
         cp $png $out
         # add date annotation
